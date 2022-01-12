@@ -26,8 +26,17 @@
 
 -->
 
-Short
-description
+Terraform module to provision an AWS Key Management Service (KMS) Customer Managed Key (CMK)
+for Route53 DNS to use as a Key-signing Key (KSK) for enabling DNSSEC on a Hosted Zone.
+
+Provides the ability to instantiate a single KMS key to be used for multiple hosted zones.
+
+The KSK is setup using a random string. The CMK has an AWS recommended IAM key policy applied
+to it and is created as an Asymmetric ECC_NIST_P256/ECDSA_SHA_256 key as required.
+
+**IMPORTANT:** Route53 requires the KMS key be provisioned in the `us-east-1` region. If including
+within a root module configured in another region then a provider alias must be passwd when using this
+module.
 
 ---
 
@@ -62,7 +71,7 @@ We literally have [*hundreds of terraform modules*][terraform_modules] that are 
 
 ## Introduction
 
-This is an introduction.
+
 
 
 ## Security & Compliance [<img src="https://bridgecrew.io/wp-content/themes/bridgecrew/assets/images/bc-by-pc-color.svg" width="250" align="right" />](https://bridgecrew.io/)
@@ -98,9 +107,18 @@ the registry shows many of our inputs as required when in fact they are optional
 The table below correctly indicates which inputs are required.
 
 
+
+### Major Changes (breaking and otherwise)
+
+With the v1.0.0 release of this module, it has undergone major breaking changes and added
+new functionality. Efforts were made to not create these breaking changes but they were
+unavailable due to the nature of the issues fixed. Please see the [migration](MIGRATION.md)
+document for details.
+
 For a complete example, see [examples/complete](examples/complete).
 
-For automated tests of the complete example using [bats](https://github.com/bats-core/bats-core) and [Terratest](https://github.com/gruntwork-io/terratest)
+For automated tests of the complete example using [bats](https://github.com/bats-core/bats-core) 
+and [Terratest](https://github.com/gruntwork-io/terratest)
 (which tests and deploys the example on AWS), see [test](test).
 
 ```hcl
@@ -115,19 +133,21 @@ module "label" {
 }
 
 module "example" {
-  source  = "cloudposse/*****/aws"
+  source  = "ugns/route53-dnssec/aws"
   # Cloud Posse recommends pinning every module to a specific version
   # version = "x.x.x"
 
-  example = "Hello world!"
+  zones = {
+    "example.com" = {
+      zone_id = "Z8VLZEXAMPLE"
+    }
+  }
 
   context = module.label.this
 }
 ```
 
-## Quick Start
 
-Here's how to get started...
 
 
 ## Examples
@@ -169,14 +189,13 @@ Available targets:
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_kms_key"></a> [kms\_key](#module\_kms\_key) | cloudposse/kms-key/aws | 0.12.1 |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_kms_alias.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
-| [aws_kms_key.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 | [aws_route53_key_signing_key.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_key_signing_key) | resource |
 | [random_string.ksk](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_caller_identity.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -189,6 +208,7 @@ Available targets:
 | <a name="input_additional_tag_map"></a> [additional\_tag\_map](#input\_additional\_tag\_map) | Additional key-value pairs to add to each map in `tags_as_list_of_maps`. Not added to `tags` or `id`.<br>This is for some rare cases where resources want additional configuration of tags<br>and therefore take a list of maps with tag key, value, and additional configuration. | `map(string)` | `{}` | no |
 | <a name="input_attributes"></a> [attributes](#input\_attributes) | ID element. Additional attributes (e.g. `workers` or `cluster`) to add to `id`,<br>in the order they appear in the list. New attributes are appended to the<br>end of the list. The elements of the list are joined by the `delimiter`<br>and treated as a single ID element. | `list(string)` | `[]` | no |
 | <a name="input_context"></a> [context](#input\_context) | Single object for setting entire context at once.<br>See description of individual variables for details.<br>Leave string and numeric variables as `null` to use default value.<br>Individual variable settings (non-null) override settings in context object,<br>except for attributes, tags, and additional\_tag\_map, which are merged. | `any` | <pre>{<br>  "additional_tag_map": {},<br>  "attributes": [],<br>  "delimiter": null,<br>  "descriptor_formats": {},<br>  "enabled": true,<br>  "environment": null,<br>  "id_length_limit": null,<br>  "label_key_case": null,<br>  "label_order": [],<br>  "label_value_case": null,<br>  "labels_as_tags": [<br>    "unset"<br>  ],<br>  "name": null,<br>  "namespace": null,<br>  "regex_replace_chars": null,<br>  "stage": null,<br>  "tags": {},<br>  "tenant": null<br>}</pre> | no |
+| <a name="input_deletion_window_in_days"></a> [deletion\_window\_in\_days](#input\_deletion\_window\_in\_days) | (Optional) The waiting period, specified in number of days. <br>After the waiting period ends, AWS KMS deletes the KMS key.<br>If you specify a value, it must be between 7 and 30, inclusive.<br>Defaults to `7`. | `number` | `7` | no |
 | <a name="input_delimiter"></a> [delimiter](#input\_delimiter) | Delimiter to be used between ID elements.<br>Defaults to `-` (hyphen). Set to `""` to use no delimiter at all. | `string` | `null` | no |
 | <a name="input_descriptor_formats"></a> [descriptor\_formats](#input\_descriptor\_formats) | Describe additional descriptors to be output in the `descriptors` output map.<br>Map of maps. Keys are names of descriptors. Values are maps of the form<br>`{<br>   format = string<br>   labels = list(string)<br>}`<br>(Type is `any` so the map values can later be enhanced to provide additional options.)<br>`format` is a Terraform format string to be passed to the `format()` function.<br>`labels` is a list of labels, in order, to pass to `format()` function.<br>Label values will be normalized before being passed to `format()` so they will be<br>identical to how they appear in `id`.<br>Default is `{}` (`descriptors` output will be empty). | `any` | `{}` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Set to false to prevent the module from creating any resources | `bool` | `null` | no |
@@ -204,13 +224,14 @@ Available targets:
 | <a name="input_stage"></a> [stage](#input\_stage) | ID element. Usually used to indicate role, e.g. 'prod', 'staging', 'source', 'build', 'test', 'deploy', 'release' | `string` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Additional tags (e.g. `{'BusinessUnit': 'XYZ'}`).<br>Neither the tag keys nor the tag values will be modified by this module. | `map(string)` | `{}` | no |
 | <a name="input_tenant"></a> [tenant](#input\_tenant) | ID element \_(Rarely used, not included by default)\_. A customer identifier, indicating who this instance of a resource is for | `string` | `null` | no |
-| <a name="input_zone_ids"></a> [zone\_ids](#input\_zone\_ids) | A list of Hosted Zone IDs to assign KSK to | `list(string)` | `[]` | no |
+| <a name="input_zones"></a> [zones](#input\_zones) | (Optional) A map of hosted zones with `zone_id` to assign the<br>KSK to in the format of:<pre>{<br>  "example.com" = {<br>      zone_id = "Z8VLZEXAMPLE"<br>  }<br>}</pre>Defaults to `{}` which will generate the KMS key and alias but<br>not assign it to a hosted zone which can be useful for staging. | `map(map(string))` | `{}` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_this_key_arn"></a> [this\_key\_arn](#output\_this\_key\_arn) | KMS key arn for Route53 DNSSEC CMK |
+| <a name="output_key_arn"></a> [key\_arn](#output\_key\_arn) | KMS key arn for Route53 DNSSEC CMK |
+| <a name="output_this_key_arn"></a> [this\_key\_arn](#output\_this\_key\_arn) | Deprecated: KMS key arn for Route53 DNSSEC CMK |
 <!-- markdownlint-restore -->
 
 
@@ -232,6 +253,8 @@ Check out these related projects.
 
 For additional context, refer to some of these links.
 
+- [domain-configure-dnssec](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-configure-dnssec.html) - AWS Route53 Developers Guide: Configuring DNSSEC for a domain
+- [dns-configuring-dnssec](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec.html) - AWS Route53 Developers Guide: Configuring DNSSEC signing in Amazone Route 53
 
 
 ## Help
