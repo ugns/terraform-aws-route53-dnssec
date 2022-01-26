@@ -1,0 +1,118 @@
+#
+# This is the canonical configuration for the `README.md`
+# Run `make readme` to rebuild the `README.md`
+#
+
+# Name of this project
+name: "terraform-aws-route53-dnssec"
+
+# License of this project
+license: "APACHE2"
+
+# Copyrights
+copyrights:
+- name: "UnderGrid Network Services"
+  url: "https://undergrid.net"
+  year: "2021"
+
+# Canonical GitHub repo
+github_repo: "ugns/terraform-aws-route53-dnssec"
+
+# Badges to display
+badges:
+- name: "Latest Release"
+  image: "https://img.shields.io/github/release/ugns/terraform-aws-route53-dnssec.svg"
+  url: "https://github.com/ugns/terraform-aws-route53-dnssec/releases/latest"
+
+# List any related terraform modules that this module may be used with or that this module depends on.
+related:
+- name: "terraform-null-label"
+  description: "Terraform module designed to generate consistent names and tags for resources. Use terraform-null-label to implement a strict naming convention."
+  url: "https://github.com/cloudposse/terraform-null-label"
+
+# List any resources helpful for someone to get started. For example, link to the hashicorp documentation or AWS documentation.
+references:
+- name: "domain-configure-dnssec"
+  description: "AWS Route53 Developers Guide: Configuring DNSSEC for a domain"
+  url: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-configure-dnssec.html"
+- name: "dns-configuring-dnssec"
+  description: "AWS Route53 Developers Guide: Configuring DNSSEC signing in Amazone Route 53"
+  url: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec.html"
+
+# Short description of this project
+description: |-
+  Terraform module to provision an AWS Key Management Service (KMS) Customer Managed Key (CMK)
+  for Route53 DNS to use as a Key-signing Key (KSK) for enabling DNSSEC on a Hosted Zone.
+
+  Provides the ability to instantiate a single KMS key to be used for multiple hosted zones.
+
+  The KSK is setup using a random string. The CMK has an AWS recommended IAM key policy applied
+  to it and is created as an Asymmetric ECC_NIST_P256/ECDSA_SHA_256 key as required.
+
+  **IMPORTANT:** Route53 requires the KMS key be provisioned in the `us-east-1` region. If including
+  within a root module configured in another region then a provider alias must be passwd when using this
+  module.
+
+# Introduction to the project
+introduction: ""
+
+# How to use this module. Should be an easy example to copy and paste.
+usage: |-
+
+  ### Major Changes (breaking and otherwise)
+
+  With the v1.0.0 release of this module, it has undergone major breaking changes and added
+  new functionality. Efforts were made to not create these breaking changes but they were
+  unavailable due to the nature of the issues fixed. Please see the [migration](MIGRATION.md)
+  document for details.
+
+  For a complete example, see [examples/complete](examples/complete).
+
+  For automated tests of the complete example using [bats](https://github.com/bats-core/bats-core) 
+  and [Terratest](https://github.com/gruntwork-io/terratest)
+  (which tests and deploys the example on AWS), see [test](test).
+
+  ```hcl
+  # Create a standard label resource. See [null-label](https://github.com/cloudposse/terraform-null-label/#terraform-null-label--)
+  module "label" {
+    source  = "cloudposse/label/null"
+    # Cloud Posse recommends pinning every module to a specific version, though usually you want to use the current one
+    # version = "x.x.x"
+
+    namespace = "eg"
+    name      = "example"
+  }
+
+  module "example" {
+    source  = "ugns/route53-dnssec/aws"
+    # Cloud Posse recommends pinning every module to a specific version
+    # version = "x.x.x"
+
+    zones = {
+      "example.com" = {
+        zone_id = "Z8VLZEXAMPLE"
+      }
+    }
+  
+    context = module.label.this
+  }
+  ```
+
+# Example usage
+examples: |-
+  Here is an example of using this module:
+  - [`examples/complete`](https://github.com/ugns/terraform-aws-route53-dnssec/tree/main/examples/complete) - complete example of using this module
+
+# How to get started quickly
+# quickstart: |-
+#   Here's how to get started...
+
+# Other files to include in this README from the project folder
+include:
+- "docs/targets.md"
+- "docs/terraform.md"
+
+# Contributors to this project
+contributors:
+- name: "Jeremy T. Bouse"
+  github: "jbouse"
