@@ -27,6 +27,12 @@ variable "deletion_window_in_days" {
   default     = 7
 }
 
+variable "alias" {
+  type        = string
+  default     = "alias/ksk-${each.value.zone_id}"
+  description = "The display name of the alias. The name must start with the word `alias` followed by a forward slash. If not specified, the alias name will be auto-generated."
+}
+
 locals {
   zones = module.this.enabled ? var.zones : {}
 }
